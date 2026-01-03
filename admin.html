@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Abbay TV Ethiopia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="general.css">
+</head>
+<body>
+    <!-- Admin Login -->
+    <div class="admin-container">
+        <div class="admin-login" id="adminLoginForm">
+            <h1 class="text-center text-gold">Admin Login</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="adminEmail">Email</label>
+                    <input type="email" id="adminEmail" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div class="admin-dashboard" id="adminDashboard">
+            <h1 class="section-title">Admin Dashboard</h1>
+            
+            <!-- News Management -->
+            <section class="admin-section">
+                <h2 class="text-gold">Manage News</h2>
+                <form id="newsForm">
+                    <div class="form-row">
+                        <input type="text" name="title" placeholder="News Title" required>
+                        <input type="text" name="youtube_url" placeholder="YouTube URL">
+                        <input type="text" name="category" placeholder="Category">
+                        <input type="text" name="section" placeholder="Section">
+                    </div>
+                    <div class="form-row">
+                        <textarea name="description" placeholder="Description" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Add News</button>
+                </form>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newsTable">
+                        <tr>
+                            <td colspan="6">Loading news...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Programs Management -->
+            <section class="admin-section">
+                <h2 class="text-gold">Manage Programs</h2>
+                <form id="programsForm">
+                    <div class="form-row">
+                        <input type="text" name="title" placeholder="Program Title" required>
+                        <input type="text" name="youtube_url" placeholder="YouTube URL">
+                        <input type="text" name="category" placeholder="Category">
+                    </div>
+                    <div class="form-row">
+                        <textarea name="description" placeholder="Description" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Program</button>
+                </form>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="programsTable">
+                        <tr>
+                            <td colspan="6">Loading programs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Live Videos Management -->
+            <section class="admin-section">
+                <h2 class="text-gold">Manage Live Videos</h2>
+                <form id="liveForm">
+                    <div class="form-row">
+                        <input type="text" name="title" placeholder="Video Title" required>
+                        <input type="text" name="youtube_url" placeholder="YouTube URL" required>
+                    </div>
+                    <div class="form-row">
+                        <textarea name="description" placeholder="Description" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Live Video</button>
+                </form>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liveTable">
+                        <tr>
+                            <td colspan="5">Loading live videos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Jobs Management -->
+            <section class="admin-section">
+                <h2 class="text-gold">Manage Jobs</h2>
+                <form id="jobsForm">
+                    <div class="form-row">
+                        <input type="text" name="title" placeholder="Job Title" required>
+                        <input type="text" name="company" placeholder="Company" required>
+                        <input type="text" name="location" placeholder="Location" required>
+                        <select name="type" required>
+                            <option value="">Select Type</option>
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Internship">Internship</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <input type="text" name="category" placeholder="Category">
+                        <input type="text" name="salary_range" placeholder="Salary Range">
+                        <input type="url" name="apply_url" placeholder="Application URL">
+                        <input type="text" name="logo_url" placeholder="Logo URL (optional)">
+                    </div>
+                    <div class="form-row">
+                        <input type="date" name="deadline" placeholder="Deadline" required>
+                        <textarea name="description" placeholder="Job Description" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Job</button>
+                </form>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Deadline</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobsTable">
+                        <tr>
+                            <td colspan="7">Loading jobs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- Messages Management -->
+            <section class="admin-section">
+                <h2 class="text-gold">Contact Messages</h2>
+                
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Message</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="messagesTable">
+                        <tr>
+                            <td colspan="6">Loading messages...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="main.js"></script>
+</body>
+</html>
