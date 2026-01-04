@@ -114,6 +114,10 @@
             padding: 0.375rem 0.75rem;
             font-size: 0.875rem;
         }
+        
+        .gold-text {
+            color: #d4af37;
+        }
     </style>
 </head>
 <body>
@@ -144,7 +148,7 @@
             <!-- Header -->
             <div class="admin-header">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h1 style="color: white;">Admin Dashboard</h1>
+                    <h1 style="color: white;">Admin Dashboard <span class="gold-text">Abbay TV</span></h1>
                     <button class="btn btn-secondary" onclick="logoutAdmin()">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
@@ -157,25 +161,25 @@
                 <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                     <div class="card">
                         <div class="card-content">
-                            <h3 class="card-title" id="newsCount">0</h3>
+                            <h3 class="card-title gold-text" id="newsCount">0</h3>
                             <p class="card-description">News Articles</p>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-content">
-                            <h3 class="card-title" id="programsCount">0</h3>
+                            <h3 class="card-title gold-text" id="programsCount">0</h3>
                             <p class="card-description">TV Programs</p>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-content">
-                            <h3 class="card-title" id="jobsCount">0</h3>
+                            <h3 class="card-title gold-text" id="jobsCount">0</h3>
                             <p class="card-description">Job Listings</p>
                         </div>
                     </div>
                     <div class="card">
                         <div class="card-content">
-                            <h3 class="card-title" id="messagesCount">0</h3>
+                            <h3 class="card-title gold-text" id="messagesCount">0</h3>
                             <p class="card-description">New Messages</p>
                         </div>
                     </div>
