@@ -2,362 +2,428 @@
 const SUPABASE_URL = 'https://bbjlfleaksumwtimzdim.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_C9TxlMKsCRzYaOMZz_nsNg_9Dg3rD4y';
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Global State
-let currentPage = 1;
-let currentFilters = {};
-let currentSort = 'date_desc';
+// Create Supabase client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // DOM Elements
-const mobileNav = document.getElementById('mobileNav');
-const searchInput = document.getElementById('searchInput');
-const searchResults = document.getElementById('searchResults');
-const modal = document.getElementById('modal');
-const modalContent = document.getElementById('modalContent');
-const closeModal = document.querySelector('.close-modal');
-const contactForm = document.getElementById('contactForm');
-const thankYouMessage = document.getElementById('thankYouMessage');
-const adminLoginForm = document.getElementById('adminLoginForm');
-const adminDashboard = document.getElementById('adminDashboard');
+const hamburger = document.querySelector('.hamburger');
+const mobileMenu = document.querySelector('.mobile-menu');
+const closeMenuBtn = document.querySelector('.close-menu');
+const videoModal = document.querySelector('.video-modal');
+const videoCloseBtn = document.querySelector('.video-close');
+const searchInput = document.querySelector('.search-input');
+const mobileSearch = document.querySelector('.mobile-search');
 
-// Initialize on page load
+// Initialize App
 document.addEventListener('DOMContentLoaded', () => {
-    initHamburgerMenu();
+    initNavigation();
+    initVideoPlayer();
     initSearch();
-    initModals();
-    initSorting();
-    initFilters();
-    
-    // Page-specific initialization
-    const path = window.location.pathname;
-    const page = path.split('/').pop() || 'index.html';
-    
-    switch(page) {
-        case 'index.html':
-            loadHighlights();
-            break;
-        case 'news.html':
-            loadNews();
-            break;
-        case 'programs.html':
-            loadPrograms();
-            break;
-        case 'live.html':
-            loadLive();
-            break;
-        case 'jobs.html':
-            loadJobs();
-            break;
-        case 'contact.html':
-            initContactForm();
-            break;
-        case 'admin.html':
-            initAdminPage();
-            break;
-    }
+    loadPageContent();
+    setActiveNavLink();
 });
 
-// Hamburger Menu
-function initHamburgerMenu() {
-    const hamburger = document.querySelector('.hamburger');
-    const closeMenu = document.querySelector('.close-menu');
-    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
-    
+// ====== NAVIGATION FUNCTIONS ======
+
+// Initialize Navigation
+function initNavigation() {
+    // Hamburger menu toggle
     if (hamburger) {
-        hamburger.addEventListener('click', () => {
-            mobileNav.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
+        hamburger.addEventListener('click', toggleMobileMenu);
     }
-    
-    if (closeMenu) {
-        closeMenu.addEventListener('click', () => {
-            mobileNav.classList.remove('active');
-            document.body.style.overflow = '';
-        });
-    }
-    
-    mobileNavLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            mobileNav.classList.remove('active');
-            document.body.style.overflow = '';
-        });
-    });
-}
 
-// Live Search
-function initSearch() {
-    if (!searchInput) return;
-    
-    let searchTimeout;
-    
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        const query = e.target.value.trim();
-        
-        if (query.length < 2) {
-            searchResults.classList.remove('active');
-            return;
-        }
-        
-        searchTimeout = setTimeout(async () => {
-            await performSearch(query);
-        }, 300);
-    });
-    
-    // Close search results when clicking outside
+    // Close menu button
+    if (closeMenuBtn) {
+        closeMenuBtn.addEventListener('click', closeMobileMenu);
+    }
+
+    // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-            searchResults.classList.remove('active');
+        if (mobileMenu.classList.contains('active') && 
+            !mobileMenu.contains(e.target) && 
+            !hamburger.contains(e.target)) {
+            closeMobileMenu();
+        }
+    });
+
+    // Close menu with ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+            closeMobileMenu();
         }
     });
 }
 
-async function performSearch(query) {
-    try {
-        // Search across multiple tables
-        const [newsResults, programsResults, liveResults, jobsResults] = await Promise.all([
-            supabase.from('news').select('*').ilike('title', `%${query}%`).limit(5),
-            supabase.from('programs').select('*').ilike('title', `%${query}%`).limit(5),
-            supabase.from('live').select('*').ilike('title', `%${query}%`).limit(5),
-            supabase.from('jobs').select('*').ilike('title', `%${query}%`).limit(5)
-        ]);
-        
-        const results = [
-            ...(newsResults.data || []).map(item => ({...item, type: 'news'})),
-            ...(programsResults.data || []).map(item => ({...item, type: 'programs'})),
-            ...(liveResults.data || []).map(item => ({...item, type: 'live'})),
-            ...(jobsResults.data || []).map(item => ({...item, type: 'jobs'}))
-        ];
-        
-        displaySearchResults(results);
-    } catch (error) {
-        console.error('Search error:', error);
+// Toggle Mobile Menu
+function toggleMobileMenu() {
+    mobileMenu.classList.toggle('active');
+    hamburger.classList.toggle('active');
+    document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+    
+    // Animate hamburger lines
+    const lines = document.querySelectorAll('.hamburger-line');
+    if (mobileMenu.classList.contains('active')) {
+        lines[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+        lines[1].style.opacity = '0';
+        lines[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
+    } else {
+        lines[0].style.transform = 'none';
+        lines[1].style.opacity = '1';
+        lines[2].style.transform = 'none';
     }
 }
 
-function displaySearchResults(results) {
-    searchResults.innerHTML = '';
+// Close Mobile Menu
+function closeMobileMenu() {
+    mobileMenu.classList.remove('active');
+    hamburger.classList.remove('active');
+    document.body.style.overflow = '';
     
-    if (results.length === 0) {
-        searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
-        searchResults.classList.add('active');
+    // Reset hamburger lines
+    const lines = document.querySelectorAll('.hamburger-line');
+    lines[0].style.transform = 'none';
+    lines[1].style.opacity = '1';
+    lines[2].style.transform = 'none';
+}
+
+// Set Active Navigation Link
+function setActiveNavLink() {
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
+    // Desktop links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const linkPage = link.getAttribute('href');
+        if (linkPage === currentPage || 
+            (currentPage === 'index.html' && linkPage === './')) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+    
+    // Mobile links
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        const linkPage = link.getAttribute('href');
+        if (linkPage === currentPage || 
+            (currentPage === 'index.html' && linkPage === './')) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+}
+
+// ====== VIDEO PLAYER FUNCTIONS ======
+
+// Initialize Video Player
+function initVideoPlayer() {
+    if (videoCloseBtn) {
+        videoCloseBtn.addEventListener('click', closeVideoPlayer);
+    }
+    
+    // Close video player when clicking outside
+    videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) {
+            closeVideoPlayer();
+        }
+    });
+    
+    // Close with ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && videoModal.classList.contains('active')) {
+            closeVideoPlayer();
+        }
+    });
+}
+
+// Open Video Player
+function openVideoPlayer(videoId, title, description = '') {
+    const container = document.querySelector('.video-container');
+    
+    container.innerHTML = `
+        <button class="video-close">&times;</button>
+        <div style="padding: 2rem;">
+            <h2 style="color: white; margin-bottom: 1rem;">${title}</h2>
+            ${description ? `<p style="color: #94A3B8; margin-bottom: 1.5rem;">${description}</p>` : ''}
+            <div style="position: relative; padding-bottom: 56.25%; height: 0;">
+                <iframe 
+                    src="https://www.youtube.com/embed/${videoId}" 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    `;
+    
+    videoModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Re-attach close button listener
+    document.querySelector('.video-close').addEventListener('click', closeVideoPlayer);
+}
+
+// Close Video Player
+function closeVideoPlayer() {
+    videoModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Extract YouTube ID
+function extractYouTubeId(url) {
+    if (!url) return null;
+    
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+        /youtube\.com\/embed\/([^&\n?#]+)/,
+        /youtube\.com\/v\/([^&\n?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    
+    return null;
+}
+
+// ====== SEARCH FUNCTIONALITY ======
+
+// Initialize Search
+function initSearch() {
+    // Desktop search
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
+    }
+    
+    // Mobile search
+    if (mobileSearch) {
+        mobileSearch.addEventListener('input', debounce(handleMobileSearch, 300));
+    }
+}
+
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Handle Search
+async function handleSearch(e) {
+    const query = e.target.value.trim();
+    if (query.length < 2) {
+        hideSearchResults();
         return;
     }
     
-    results.forEach(result => {
-        const item = document.createElement('div');
-        item.className = 'search-result-item';
-        item.textContent = result.title;
-        item.addEventListener('click', () => {
-            window.location.href = `${result.type}.html#${result.id}`;
-            searchResults.classList.remove('active');
-            searchInput.value = '';
-        });
-        searchResults.appendChild(item);
-    });
-    
-    searchResults.classList.add('active');
+    const results = await performSearch(query);
+    displaySearchResults(results, 'desktop');
 }
 
-// Modal System
-function initModals() {
-    if (closeModal) {
-        closeModal.addEventListener('click', closeModalFunc);
+// Handle Mobile Search
+async function handleMobileSearch(e) {
+    const query = e.target.value.trim();
+    if (query.length < 2) {
+        hideSearchResults();
+        return;
     }
     
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModalFunc();
-        }
-    });
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModalFunc();
-        }
-    });
+    const results = await performSearch(query);
+    displaySearchResults(results, 'mobile');
 }
 
-function openModal(content) {
-    modalContent.innerHTML = content;
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModalFunc() {
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-    modalContent.innerHTML = '';
-}
-
-// YouTube Modal
-function openYouTubeModal(youtubeUrl, title, description) {
-    const videoId = extractYouTubeId(youtubeUrl);
-    
-    const content = `
-        <button class="close-modal" aria-label="Close modal">&times;</button>
-        <h2 class="text-gold">${title}</h2>
-        ${description ? `<p class="mt-2">${description}</p>` : ''}
-        <div class="video-container">
-            <iframe 
-                src="https://www.youtube.com/embed/${videoId}" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        </div>
-    `;
-    
-    openModal(content);
-    
-    // Re-attach close button listener
-    document.querySelector('.close-modal').addEventListener('click', closeModalFunc);
-}
-
-function extractYouTubeId(url) {
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
-    return match ? match[1] : '';
-}
-
-// Job Detail Modal
-function openJobModal(job) {
-    const content = `
-        <button class="close-modal" aria-label="Close modal">&times;</button>
-        <h2 class="text-gold">${job.title}</h2>
-        
-        ${job.logo_url ? `<img src="${job.logo_url}" alt="${job.company} logo" class="company-logo">` : ''}
-        
-        <div class="job-details">
-            <div class="job-detail-item">
-                <strong>Company:</strong> ${job.company}
-            </div>
-            <div class="job-detail-item">
-                <strong>Location:</strong> ${job.location}
-            </div>
-            <div class="job-detail-item">
-                <strong>Type:</strong> ${job.type}
-            </div>
-            <div class="job-detail-item">
-                <strong>Salary:</strong> ${job.salary_range || 'Not specified'}
-            </div>
-            <div class="job-detail-item">
-                <strong>Deadline:</strong> ${new Date(job.deadline).toLocaleDateString()}
-            </div>
-            <div class="job-detail-item">
-                <strong>Posted:</strong> ${new Date(job.date).toLocaleDateString()}
-            </div>
-        </div>
-        
-        <div class="mt-2">
-            <h3 class="text-blue">Job Description</h3>
-            <p>${job.description}</p>
-        </div>
-        
-        ${job.apply_url ? `
-            <div class="mt-2">
-                <a href="${job.apply_url}" target="_blank" class="play-btn">Apply Now</a>
-            </div>
-        ` : ''}
-    `;
-    
-    openModal(content);
-    
-    // Re-attach close button listener
-    document.querySelector('.close-modal').addEventListener('click', closeModalFunc);
-}
-
-// Sorting
-function initSorting() {
-    const sortBtns = document.querySelectorAll('.sort-btn');
-    sortBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            sortBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentSort = btn.dataset.sort;
-            
-            // Reload content based on current page
-            const path = window.location.pathname;
-            const page = path.split('/').pop();
-            
-            switch(page) {
-                case 'news.html':
-                    loadNews();
-                    break;
-                case 'programs.html':
-                    loadPrograms();
-                    break;
-                case 'live.html':
-                    loadLive();
-                    break;
-                case 'jobs.html':
-                    loadJobs();
-                    break;
-            }
-        });
-    });
-}
-
-// Filtering
-function initFilters() {
-    const filterSelects = document.querySelectorAll('.filter-select');
-    filterSelects.forEach(select => {
-        select.addEventListener('change', (e) => {
-            const filterType = e.target.dataset.filter;
-            const value = e.target.value;
-            
-            if (value === 'all') {
-                delete currentFilters[filterType];
-            } else {
-                currentFilters[filterType] = value;
-            }
-            
-            // Reload content based on current page
-            const path = window.location.pathname;
-            const page = path.split('/').pop();
-            
-            switch(page) {
-                case 'news.html':
-                    loadNews();
-                    break;
-                case 'programs.html':
-                    loadPrograms();
-                    break;
-                case 'live.html':
-                    loadLive();
-                    break;
-                case 'jobs.html':
-                    loadJobs();
-                    break;
-            }
-        });
-    });
-}
-
-// Loading Functions
-async function loadHighlights() {
+// Perform Search
+async function performSearch(query) {
     try {
-        // Fetch latest from each category
-        const [news, programs, live, jobs] = await Promise.all([
-            supabase.from('news').select('*').order('date', { ascending: false }).limit(4),
-            supabase.from('programs').select('*').order('date', { ascending: false }).limit(4),
-            supabase.from('live').select('*').order('date', { ascending: false }).limit(4),
-            supabase.from('jobs').select('*').order('date', { ascending: false }).limit(4)
+        // Search in all tables
+        const [news, programs, jobs] = await Promise.all([
+            supabase.from('news').select('*').ilike('title', `%${query}%`).limit(5),
+            supabase.from('programs').select('*').ilike('title', `%${query}%`).limit(5),
+            supabase.from('jobs').select('*').ilike('title', `%${query}%`).limit(5)
         ]);
-        
-        displayHighlights('news', news.data || []);
-        displayHighlights('programs', programs.data || []);
-        displayHighlights('live', live.data || []);
-        displayHighlights('jobs', jobs.data || []);
+
+        return [
+            ...(news.data || []).map(item => ({ ...item, type: 'news' })),
+            ...(programs.data || []).map(item => ({ ...item, type: 'programs' })),
+            ...(jobs.data || []).map(item => ({ ...item, type: 'jobs' }))
+        ];
     } catch (error) {
-        console.error('Error loading highlights:', error);
+        console.error('Search error:', error);
+        return [];
+    }
+}
+
+// Display Search Results
+function displaySearchResults(results, type = 'desktop') {
+    let resultsContainer;
+    
+    if (type === 'desktop') {
+        resultsContainer = document.querySelector('.search-results') || createSearchResultsContainer('desktop');
+    } else {
+        resultsContainer = document.getElementById('mobile-search-results') || createSearchResultsContainer('mobile');
+    }
+    
+    if (!results || results.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-result-item">No results found</div>';
+        resultsContainer.classList.add('active');
+        return;
+    }
+    
+    resultsContainer.innerHTML = results.map(item => `
+        <div class="search-result-item" onclick="goToItem('${item.type}', ${item.id})">
+            <div class="search-result-title">${item.title}</div>
+            <div class="search-result-meta">
+                <span class="search-result-type">${item.type.toUpperCase()}</span>
+                <span>${new Date(item.created_at || item.date).toLocaleDateString()}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    resultsContainer.classList.add('active');
+}
+
+// Create Search Results Container
+function createSearchResultsContainer(type) {
+    const container = document.createElement('div');
+    container.className = 'search-results';
+    
+    if (type === 'mobile') {
+        container.id = 'mobile-search-results';
+        mobileSearch.parentNode.appendChild(container);
+    } else {
+        searchInput.parentNode.appendChild(container);
+    }
+    
+    return container;
+}
+
+// Hide Search Results
+function hideSearchResults() {
+    document.querySelectorAll('.search-results').forEach(container => {
+        container.classList.remove('active');
+    });
+}
+
+// Go to Search Result Item
+function goToItem(type, id) {
+    window.location.href = `${type}.html#${id}`;
+    closeMobileMenu();
+    hideSearchResults();
+}
+
+// ====== PAGE CONTENT LOADING ======
+
+// Load Page Content
+async function loadPageContent() {
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    
+    try {
+        switch(currentPage) {
+            case 'index.html':
+            case '':
+            case '/':
+                await loadHomePage();
+                break;
+            case 'news.html':
+                await loadNewsPage();
+                break;
+            case 'programs.html':
+                await loadProgramsPage();
+                break;
+            case 'jobs.html':
+                await loadJobsPage();
+                break;
+            case 'contact.html':
+                initContactForm();
+                break;
+            case 'admin.html':
+                initAdminPage();
+                break;
+        }
+    } catch (error) {
+        console.error('Error loading page:', error);
         showError('Failed to load content. Please try again later.');
     }
 }
 
-function displayHighlights(type, items) {
-    const container = document.getElementById(`${type}Highlights`);
+// Load Home Page
+async function loadHomePage() {
+    try {
+        const [news, programs, jobs] = await Promise.all([
+            supabase.from('news').select('*').order('created_at', { ascending: false }).limit(4),
+            supabase.from('programs').select('*').order('created_at', { ascending: false }).limit(4),
+            supabase.from('jobs').select('*').order('created_at', { ascending: false }).limit(4)
+        ]);
+
+        renderSection('newsHighlights', news.data || [], 'news');
+        renderSection('programsHighlights', programs.data || [], 'programs');
+        renderSection('jobsHighlights', jobs.data || [], 'jobs');
+    } catch (error) {
+        console.error('Error loading home page:', error);
+    }
+}
+
+// Load News Page
+async function loadNewsPage() {
+    try {
+        const { data, error } = await supabase
+            .from('news')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+        if (!error && data) {
+            renderGrid('newsGrid', data, 'news');
+        }
+    } catch (error) {
+        console.error('Error loading news:', error);
+    }
+}
+
+// Load Programs Page
+async function loadProgramsPage() {
+    try {
+        const { data, error } = await supabase
+            .from('programs')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+        if (!error && data) {
+            renderGrid('programsGrid', data, 'programs');
+        }
+    } catch (error) {
+        console.error('Error loading programs:', error);
+    }
+}
+
+// Load Jobs Page
+async function loadJobsPage() {
+    try {
+        const { data, error } = await supabase
+            .from('jobs')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+        if (!error && data) {
+            renderGrid('jobsGrid', data, 'jobs');
+        }
+    } catch (error) {
+        console.error('Error loading jobs:', error);
+    }
+}
+
+// ====== RENDER FUNCTIONS ======
+
+// Render Section
+function renderSection(containerId, items, type) {
+    const container = document.getElementById(containerId);
     if (!container) return;
     
     if (!items || items.length === 0) {
@@ -366,140 +432,11 @@ function displayHighlights(type, items) {
     }
     
     container.innerHTML = items.map(item => createCard(item, type)).join('');
-    
-    // Attach event listeners to play buttons
-    container.querySelectorAll('.play-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const item = items.find(i => i.id === parseInt(btn.dataset.id));
-            if (type === 'jobs') {
-                openJobModal(item);
-            } else {
-                openYouTubeModal(item.youtube_url, item.title, item.description);
-            }
-        });
-    });
+    attachCardListeners(container, items, type);
 }
 
-async function loadNews() {
-    try {
-        let query = supabase.from('news').select('*');
-        
-        // Apply filters
-        if (currentFilters.category) {
-            query = query.eq('category', currentFilters.category);
-        }
-        
-        if (currentFilters.section) {
-            query = query.eq('section', currentFilters.section);
-        }
-        
-        // Apply sorting
-        const [field, order] = currentSort.split('_');
-        query = query.order(field, { ascending: order === 'asc' });
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        displayContent('newsGrid', data || [], 'news');
-        
-        // Update filter options
-        updateFilterOptions('news');
-    } catch (error) {
-        console.error('Error loading news:', error);
-        showError('Failed to load news. Please try again later.');
-    }
-}
-
-async function loadPrograms() {
-    try {
-        let query = supabase.from('programs').select('*');
-        
-        // Apply filters
-        if (currentFilters.category) {
-            query = query.eq('category', currentFilters.category);
-        }
-        
-        // Apply sorting
-        const [field, order] = currentSort.split('_');
-        query = query.order(field, { ascending: order === 'asc' });
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        displayContent('programsGrid', data || [], 'programs');
-        
-        // Update filter options
-        updateFilterOptions('programs');
-    } catch (error) {
-        console.error('Error loading programs:', error);
-        showError('Failed to load programs. Please try again later.');
-    }
-}
-
-async function loadLive() {
-    try {
-        let query = supabase.from('live').select('*');
-        
-        // Apply sorting
-        const [field, order] = currentSort.split('_');
-        query = query.order(field, { ascending: order === 'asc' });
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        displayContent('liveGrid', data || [], 'live');
-    } catch (error) {
-        console.error('Error loading live videos:', error);
-        showError('Failed to load live videos. Please try again later.');
-    }
-}
-
-async function loadJobs() {
-    try {
-        let query = supabase.from('jobs').select('*');
-        
-        // Apply filters
-        if (currentFilters.category) {
-            query = query.eq('category', currentFilters.category);
-        }
-        
-        if (currentFilters.type) {
-            query = query.eq('type', currentFilters.type);
-        }
-        
-        if (currentFilters.location) {
-            query = query.ilike('location', `%${currentFilters.location}%`);
-        }
-        
-        // Apply sorting
-        if (currentSort === 'deadline_asc') {
-            query = query.order('deadline', { ascending: true });
-        } else if (currentSort === 'deadline_desc') {
-            query = query.order('deadline', { ascending: false });
-        } else {
-            const [field, order] = currentSort.split('_');
-            query = query.order(field, { ascending: order === 'asc' });
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        displayContent('jobsGrid', data || [], 'jobs');
-        
-        // Update filter options
-        updateFilterOptions('jobs');
-    } catch (error) {
-        console.error('Error loading jobs:', error);
-        showError('Failed to load jobs. Please try again later.');
-    }
-}
-
-function displayContent(containerId, items, type) {
+// Render Grid
+function renderGrid(containerId, items, type) {
     const container = document.getElementById(containerId);
     if (!container) return;
     
@@ -509,40 +446,24 @@ function displayContent(containerId, items, type) {
     }
     
     container.innerHTML = items.map(item => createCard(item, type)).join('');
-    
-    // Attach event listeners
-    container.querySelectorAll('.play-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const item = items.find(i => i.id === parseInt(btn.dataset.id));
-            if (type === 'jobs') {
-                openJobModal(item);
-            } else {
-                openYouTubeModal(item.youtube_url, item.title, item.description);
-            }
-        });
-    });
+    attachCardListeners(container, items, type);
 }
 
+// Create Card HTML
 function createCard(item, type) {
-    const date = new Date(item.date).toLocaleDateString();
+    const date = new Date(item.created_at || item.date).toLocaleDateString();
     const category = item.category || type;
     
     if (type === 'jobs') {
-        const deadline = new Date(item.deadline).toLocaleDateString();
         return `
-            <div class="card">
+            <div class="card" data-id="${item.id}">
                 <div class="card-content">
                     <span class="card-category">${category}</span>
                     <h3 class="card-title">${item.title}</h3>
                     <p class="card-description">${item.description.substring(0, 150)}...</p>
-                    <div class="card-meta">
-                        <span>${item.company} • ${item.location}</span>
-                        <span>${item.type}</span>
-                    </div>
-                    <div class="card-meta">
-                        <span>Deadline: ${deadline}</span>
-                        <button class="view-btn" data-id="${item.id}">View Details</button>
+                    <div class="card-footer">
+                        <span class="card-date">${item.company} • ${item.location}</span>
+                        <button class="btn btn-secondary view-details" data-type="job">View Details</button>
                     </div>
                 </div>
             </div>
@@ -550,78 +471,121 @@ function createCard(item, type) {
     }
     
     return `
-        <div class="card">
+        <div class="card" data-id="${item.id}">
             <div class="card-content">
                 <span class="card-category">${category}</span>
                 <h3 class="card-title">${item.title}</h3>
                 <p class="card-description">${item.description.substring(0, 200)}...</p>
-                <div class="card-meta">
-                    <span>${date}</span>
-                    ${item.youtube_url ? `<button class="play-btn" data-id="${item.id}">Watch Now</button>` : ''}
+                <div class="card-footer">
+                    <span class="card-date">${date}</span>
+                    ${item.youtube_url ? '<button class="btn btn-primary watch-btn">Watch</button>' : ''}
                 </div>
             </div>
         </div>
     `;
 }
 
-async function updateFilterOptions(type) {
-    if (type === 'news') {
-        // Get unique categories and sections
-        const { data } = await supabase.from('news').select('category, section');
-        
-        if (data) {
-            const categories = [...new Set(data.map(item => item.category).filter(Boolean))];
-            const sections = [...new Set(data.map(item => item.section).filter(Boolean))];
-            
-            updateSelectOptions('categoryFilter', categories);
-            updateSelectOptions('sectionFilter', sections);
-        }
-    } else if (type === 'jobs') {
-        // Get unique categories, types, and locations
-        const { data } = await supabase.from('jobs').select('category, type, location');
-        
-        if (data) {
-            const categories = [...new Set(data.map(item => item.category).filter(Boolean))];
-            const types = [...new Set(data.map(item => item.type).filter(Boolean))];
-            const locations = [...new Set(data.map(item => item.location).filter(Boolean))];
-            
-            updateSelectOptions('jobCategoryFilter', categories);
-            updateSelectOptions('jobTypeFilter', types);
-            updateSelectOptions('jobLocationFilter', locations);
-        }
-    }
-}
-
-function updateSelectOptions(selectId, options) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
+// Attach Card Event Listeners
+function attachCardListeners(container, items, type) {
+    // Watch buttons
+    container.querySelectorAll('.watch-btn').forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            const item = items[index];
+            const videoId = extractYouTubeId(item.youtube_url);
+            if (videoId) {
+                openVideoPlayer(videoId, item.title, item.description);
+            }
+        });
+    });
     
-    // Keep the "All" option
-    const allOption = select.querySelector('option[value="all"]');
-    select.innerHTML = '';
-    if (allOption) select.appendChild(allOption);
-    
-    options.forEach(option => {
-        const opt = document.createElement('option');
-        opt.value = option;
-        opt.textContent = option;
-        select.appendChild(opt);
+    // View details buttons for jobs
+    container.querySelectorAll('.view-details').forEach((btn, index) => {
+        if (type === 'jobs') {
+            btn.addEventListener('click', () => {
+                const item = items[index];
+                openJobModal(item);
+            });
+        }
     });
 }
 
-// Contact Form
-function initContactForm() {
-    if (!contactForm) return;
+// ====== JOB MODAL ======
+
+// Open Job Modal
+function openJobModal(job) {
+    const container = document.querySelector('.video-container');
     
-    contactForm.addEventListener('submit', async (e) => {
+    container.innerHTML = `
+        <button class="video-close">&times;</button>
+        <div style="padding: 2rem;">
+            <h2 style="color: white; margin-bottom: 1rem;">${job.title}</h2>
+            
+            ${job.logo_url ? `
+                <img src="${job.logo_url}" alt="${job.company}" style="max-width: 100px; margin-bottom: 1.5rem;">
+            ` : ''}
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h4 style="color: #94A3B8; margin-bottom: 0.5rem;">Company</h4>
+                    <p style="color: white;">${job.company}</p>
+                </div>
+                <div>
+                    <h4 style="color: #94A3B8; margin-bottom: 0.5rem;">Location</h4>
+                    <p style="color: white;">${job.location}</p>
+                </div>
+                <div>
+                    <h4 style="color: #94A3B8; margin-bottom: 0.5rem;">Type</h4>
+                    <p style="color: white;">${job.type}</p>
+                </div>
+                <div>
+                    <h4 style="color: #94A3B8; margin-bottom: 0.5rem;">Salary</h4>
+                    <p style="color: white;">${job.salary_range || 'Not specified'}</p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: white; margin-bottom: 1rem;">Job Description</h3>
+                <p style="color: #CBD5E1; line-height: 1.6;">${job.description}</p>
+            </div>
+            
+            ${job.deadline ? `
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: #94A3B8; margin-bottom: 0.5rem;">Application Deadline</h4>
+                    <p style="color: white;">${new Date(job.deadline).toLocaleDateString()}</p>
+                </div>
+            ` : ''}
+            
+            ${job.apply_url ? `
+                <a href="${job.apply_url}" target="_blank" class="btn btn-primary" style="width: 100%; text-align: center;">
+                    Apply Now
+                </a>
+            ` : ''}
+        </div>
+    `;
+    
+    videoModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Re-attach close button listener
+    document.querySelector('.video-close').addEventListener('click', closeVideoPlayer);
+}
+
+// ====== CONTACT FORM ======
+
+// Initialize Contact Form
+function initContactForm() {
+    const form = document.getElementById('contactForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const formData = new FormData(contactForm);
+        const formData = new FormData(form);
         const data = {
             name: formData.get('name'),
             email: formData.get('email'),
             message: formData.get('message'),
-            date: new Date().toISOString()
+            created_at: new Date().toISOString()
         };
         
         try {
@@ -629,186 +593,251 @@ function initContactForm() {
             
             if (error) throw error;
             
-            // Show thank you message
-            contactForm.reset();
-            thankYouMessage.classList.add('active');
-            
-            // Hide message after 5 seconds
-            setTimeout(() => {
-                thankYouMessage.classList.remove('active');
-            }, 5000);
+            form.reset();
+            showMessage('Message sent successfully! We will get back to you soon.', 'success');
         } catch (error) {
-            console.error('Error submitting form:', error);
-            alert('Failed to send message. Please try again.');
+            console.error('Error sending message:', error);
+            showMessage('Failed to send message. Please try again.', 'error');
         }
     });
 }
 
-// Admin Page
+// ====== ADMIN PAGE ======
+
+// Initialize Admin Page
 function initAdminPage() {
-    if (!adminLoginForm) return;
+    const loginForm = document.getElementById('adminLogin');
+    const adminPanel = document.getElementById('adminPanel');
     
-    adminLoginForm.addEventListener('submit', (e) => {
+    if (!loginForm || !adminPanel) return;
+    
+    // Check if already logged in
+    if (localStorage.getItem('adminLoggedIn') === 'true') {
+        loginForm.style.display = 'none';
+        adminPanel.style.display = 'block';
+        loadAdminData();
+        return;
+    }
+    
+    loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
         const email = document.getElementById('adminEmail').value;
         const password = document.getElementById('adminPassword').value;
         
         if (email === 'eyakemabi@gmail.com' && password === '@Eyu26042604') {
-            adminLoginForm.style.display = 'none';
-            adminDashboard.style.display = 'block';
+            localStorage.setItem('adminLoggedIn', 'true');
+            loginForm.style.display = 'none';
+            adminPanel.style.display = 'block';
             loadAdminData();
         } else {
-            alert('Invalid credentials');
+            showMessage('Invalid credentials', 'error');
         }
     });
 }
 
+// Load Admin Data
 async function loadAdminData() {
+    const tables = ['news', 'programs', 'jobs', 'messages'];
+    
+    for (const table of tables) {
+        await loadAdminTable(table);
+    }
+}
+
+// Load Admin Table
+async function loadAdminTable(table) {
     try {
-        // Load all tables
-        const [news, programs, live, jobs, messages] = await Promise.all([
-            supabase.from('news').select('*').order('date', { ascending: false }),
-            supabase.from('programs').select('*').order('date', { ascending: false }),
-            supabase.from('live').select('*').order('date', { ascending: false }),
-            supabase.from('jobs').select('*').order('date', { ascending: false }),
-            supabase.from('messages').select('*').order('date', { ascending: false })
-        ]);
-        
-        displayAdminTable('newsTable', news.data || [], 'news');
-        displayAdminTable('programsTable', programs.data || [], 'programs');
-        displayAdminTable('liveTable', live.data || [], 'live');
-        displayAdminTable('jobsTable', jobs.data || [], 'jobs');
-        displayAdminTable('messagesTable', messages.data || [], 'messages');
-        
-        // Initialize form submission handlers
-        initAdminForms();
-    } catch (error) {
-        console.error('Error loading admin data:', error);
-        showError('Failed to load admin data');
-    }
-}
-
-function displayAdminTable(tableId, items, type) {
-    const table = document.getElementById(tableId);
-    if (!table) return;
-    
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    items.forEach(item => {
-        const row = document.createElement('tr');
-        
-        // Different columns for different types
-        if (type === 'messages') {
-            row.innerHTML = `
-                <td>${item.id}</td>
-                <td>${item.name}</td>
-                <td>${item.email}</td>
-                <td>${item.message.substring(0, 50)}...</td>
-                <td>${new Date(item.date).toLocaleDateString()}</td>
-                <td>
-                    <button class="action-btn delete-btn" onclick="deleteRecord('${type}', ${item.id})">Delete</button>
-                </td>
-            `;
-        } else {
-            row.innerHTML = `
-                <td>${item.id}</td>
-                <td>${item.title}</td>
-                <td>${item.description.substring(0, 50)}...</td>
-                <td>${item.category || 'N/A'}</td>
-                <td>${new Date(item.date).toLocaleDateString()}</td>
-                <td>
-                    <button class="action-btn edit-btn" onclick="editRecord('${type}', ${item.id})">Edit</button>
-                    <button class="action-btn delete-btn" onclick="deleteRecord('${type}', ${item.id})">Delete</button>
-                </td>
-            `;
+        const { data, error } = await supabase
+            .from(table)
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+        if (!error && data) {
+            renderAdminTable(table, data);
         }
-        
-        tbody.appendChild(row);
-    });
-}
-
-function initAdminForms() {
-    const forms = ['newsForm', 'programsForm', 'liveForm', 'jobsForm'];
-    
-    forms.forEach(formId => {
-        const form = document.getElementById(formId);
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await handleAdminFormSubmit(formId);
-            });
-        }
-    });
-}
-
-async function handleAdminFormSubmit(formId) {
-    const form = document.getElementById(formId);
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-    
-    // Convert to appropriate table name
-    const table = formId.replace('Form', '');
-    
-    // Add date if not present
-    if (!data.date) {
-        data.date = new Date().toISOString();
-    }
-    
-    try {
-        const { error } = await supabase.from(table).insert([data]);
-        
-        if (error) throw error;
-        
-        alert('Record added successfully!');
-        form.reset();
-        loadAdminData(); // Refresh tables
     } catch (error) {
-        console.error('Error adding record:', error);
-        alert('Failed to add record');
+        console.error(`Error loading ${table}:`, error);
     }
 }
 
-// These functions need to be globally accessible
-window.editRecord = async (table, id) => {
-    // Implementation for editing records
-    alert(`Edit ${table} record ${id} - This feature requires additional implementation`);
+// Render Admin Table
+function renderAdminTable(table, items) {
+    const tbody = document.getElementById(`${table}Table`);
+    if (!tbody) return;
+    
+    if (!items || items.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; color: #64748B;">
+                    No ${table} found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = items.map(item => `
+        <tr>
+            <td>${item.id}</td>
+            <td>${item.title || item.name || 'N/A'}</td>
+            <td>${item.description || item.message || 'N/A'}</td>
+            <td>${item.category || item.email || 'N/A'}</td>
+            <td>${new Date(item.created_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-secondary" onclick="editItem('${table}', ${item.id})">Edit</button>
+                <button class="btn btn-danger" onclick="deleteItem('${table}', ${item.id})">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ====== UTILITY FUNCTIONS ======
+
+// Show Message
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 500;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    if (type === 'success') {
+        messageDiv.style.background = '#10B981';
+    } else if (type === 'error') {
+        messageDiv.style.background = '#EF4444';
+    } else {
+        messageDiv.style.background = '#3B82F6';
+    }
+    
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+
+// Show Error
+function showError(message) {
+    showMessage(message, 'error');
+}
+
+// Logout Admin
+window.logoutAdmin = function() {
+    localStorage.removeItem('adminLoggedIn');
+    window.location.reload();
 };
 
-window.deleteRecord = async (table, id) => {
-    if (!confirm('Are you sure you want to delete this record?')) return;
+// Edit Item (placeholder)
+window.editItem = function(table, id) {
+    showMessage(`Edit ${table} item ${id} - This feature requires backend implementation`, 'info');
+};
+
+// Delete Item
+window.deleteItem = async function(table, id) {
+    if (!confirm(`Are you sure you want to delete this ${table} item?`)) return;
     
     try {
         const { error } = await supabase.from(table).delete().eq('id', id);
         
         if (error) throw error;
         
-        alert('Record deleted successfully!');
-        loadAdminData(); // Refresh tables
+        showMessage('Item deleted successfully', 'success');
+        loadAdminTable(table);
     } catch (error) {
-        console.error('Error deleting record:', error);
-        alert('Failed to delete record');
+        console.error('Delete error:', error);
+        showMessage('Failed to delete item', 'error');
     }
 };
 
-// Utility Functions
-function showError(message) {
-    const container = document.querySelector('.container') || document.body;
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error';
-    errorDiv.textContent = message;
-    container.prepend(errorDiv);
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
     
-    setTimeout(() => errorDiv.remove(), 5000);
-}
-
-// Date formatting helper
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #1E293B;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        margin-top: 0.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+        display: none;
+        z-index: 1000;
+    }
+    
+    .search-results.active {
+        display: block;
+    }
+    
+    .search-result-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .search-result-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .search-result-title {
+        color: white;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .search-result-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #94A3B8;
+    }
+    
+    .search-result-type {
+        background: #0066FF;
+        color: white;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+    }
+`;
+document.head.appendChild(style);

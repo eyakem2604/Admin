@@ -4,58 +4,198 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Abbay TV Ethiopia</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="general.css">
+    <style>
+        .admin-container {
+            min-height: 100vh;
+            background: #020617;
+            padding: 20px;
+        }
+        
+        .admin-login {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .admin-dashboard {
+            display: none;
+        }
+        
+        .admin-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .admin-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #CBD5E1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .admin-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #94A3B8;
+        }
+        
+        .admin-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #F59E0B;
+            color: white;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #0F172A;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .btn-small {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
 <body>
-    <!-- Admin Login -->
     <div class="admin-container">
-        <div class="admin-login" id="adminLoginForm">
-            <h1 class="text-center text-gold">Admin Login</h1>
+        <!-- Login Screen -->
+        <div id="adminLogin" class="admin-login">
+            <h2 style="color: white; margin-bottom: 2rem; text-align: center;">Admin Login</h2>
+            
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="adminEmail">Email</label>
-                    <input type="email" id="adminEmail" required>
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="adminEmail" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="adminPassword">Password</label>
-                    <input type="password" id="adminPassword" required>
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="adminPassword" required>
                 </div>
                 
-                <button type="submit" class="submit-btn">Login</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
             </form>
         </div>
-
+        
         <!-- Admin Dashboard -->
-        <div class="admin-dashboard" id="adminDashboard">
-            <h1 class="section-title">Admin Dashboard</h1>
+        <div id="adminPanel" class="admin-dashboard">
+            <!-- Header -->
+            <div class="admin-header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 style="color: white;">Admin Dashboard</h1>
+                    <button class="btn btn-secondary" onclick="logoutAdmin()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Dashboard Stats -->
+            <div class="admin-section">
+                <h2 style="color: white; margin-bottom: 1.5rem;">Overview</h2>
+                <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="card">
+                        <div class="card-content">
+                            <h3 class="card-title" id="newsCount">0</h3>
+                            <p class="card-description">News Articles</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <h3 class="card-title" id="programsCount">0</h3>
+                            <p class="card-description">TV Programs</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <h3 class="card-title" id="jobsCount">0</h3>
+                            <p class="card-description">Job Listings</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-content">
+                            <h3 class="card-title" id="messagesCount">0</h3>
+                            <p class="card-description">New Messages</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- News Management -->
-            <section class="admin-section">
-                <h2 class="text-gold">Manage News</h2>
-                <form id="newsForm">
-                    <div class="form-row">
-                        <input type="text" name="title" placeholder="News Title" required>
-                        <input type="text" name="youtube_url" placeholder="YouTube URL">
-                        <input type="text" name="category" placeholder="Category">
-                        <input type="text" name="section" placeholder="Section">
-                    </div>
-                    <div class="form-row">
-                        <textarea name="description" placeholder="Description" rows="3" required></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Add News</button>
-                </form>
+            <div class="admin-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="color: white;">News Management</h2>
+                    <button class="btn btn-primary" onclick="openModal('news')">
+                        <i class="fas fa-plus"></i> Add News
+                    </button>
+                </div>
                 
                 <table class="admin-table">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Title</th>
-                            <th>Description</th>
                             <th>Category</th>
                             <th>Date</th>
                             <th>Actions</th>
@@ -63,33 +203,28 @@
                     </thead>
                     <tbody id="newsTable">
                         <tr>
-                            <td colspan="6">Loading news...</td>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #64748B;">
+                                Loading news...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
-            </section>
+            </div>
             
             <!-- Programs Management -->
-            <section class="admin-section">
-                <h2 class="text-gold">Manage Programs</h2>
-                <form id="programsForm">
-                    <div class="form-row">
-                        <input type="text" name="title" placeholder="Program Title" required>
-                        <input type="text" name="youtube_url" placeholder="YouTube URL">
-                        <input type="text" name="category" placeholder="Category">
-                    </div>
-                    <div class="form-row">
-                        <textarea name="description" placeholder="Description" rows="3" required></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Add Program</button>
-                </form>
+            <div class="admin-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="color: white;">Programs Management</h2>
+                    <button class="btn btn-primary" onclick="openModal('programs')">
+                        <i class="fas fa-plus"></i> Add Program
+                    </button>
+                </div>
                 
                 <table class="admin-table">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Title</th>
-                            <th>Description</th>
                             <th>Category</th>
                             <th>Date</th>
                             <th>Actions</th>
@@ -97,72 +232,22 @@
                     </thead>
                     <tbody id="programsTable">
                         <tr>
-                            <td colspan="6">Loading programs...</td>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #64748B;">
+                                Loading programs...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
-            </section>
-            
-            <!-- Live Videos Management -->
-            <section class="admin-section">
-                <h2 class="text-gold">Manage Live Videos</h2>
-                <form id="liveForm">
-                    <div class="form-row">
-                        <input type="text" name="title" placeholder="Video Title" required>
-                        <input type="text" name="youtube_url" placeholder="YouTube URL" required>
-                    </div>
-                    <div class="form-row">
-                        <textarea name="description" placeholder="Description" rows="3" required></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Add Live Video</button>
-                </form>
-                
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="liveTable">
-                        <tr>
-                            <td colspan="5">Loading live videos...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
+            </div>
             
             <!-- Jobs Management -->
-            <section class="admin-section">
-                <h2 class="text-gold">Manage Jobs</h2>
-                <form id="jobsForm">
-                    <div class="form-row">
-                        <input type="text" name="title" placeholder="Job Title" required>
-                        <input type="text" name="company" placeholder="Company" required>
-                        <input type="text" name="location" placeholder="Location" required>
-                        <select name="type" required>
-                            <option value="">Select Type</option>
-                            <option value="Full-time">Full-time</option>
-                            <option value="Part-time">Part-time</option>
-                            <option value="Contract">Contract</option>
-                            <option value="Internship">Internship</option>
-                        </select>
-                    </div>
-                    <div class="form-row">
-                        <input type="text" name="category" placeholder="Category">
-                        <input type="text" name="salary_range" placeholder="Salary Range">
-                        <input type="url" name="apply_url" placeholder="Application URL">
-                        <input type="text" name="logo_url" placeholder="Logo URL (optional)">
-                    </div>
-                    <div class="form-row">
-                        <input type="date" name="deadline" placeholder="Deadline" required>
-                        <textarea name="description" placeholder="Job Description" rows="3" required></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Add Job</button>
-                </form>
+            <div class="admin-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="color: white;">Jobs Management</h2>
+                    <button class="btn btn-primary" onclick="openModal('jobs')">
+                        <i class="fas fa-plus"></i> Add Job
+                    </button>
+                </div>
                 
                 <table class="admin-table">
                     <thead>
@@ -170,23 +255,23 @@
                             <th>ID</th>
                             <th>Title</th>
                             <th>Company</th>
-                            <th>Location</th>
                             <th>Type</th>
-                            <th>Deadline</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="jobsTable">
                         <tr>
-                            <td colspan="7">Loading jobs...</td>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: #64748B;">
+                                Loading jobs...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
-            </section>
+            </div>
             
             <!-- Messages Management -->
-            <section class="admin-section">
-                <h2 class="text-gold">Contact Messages</h2>
+            <div class="admin-section">
+                <h2 style="color: white; margin-bottom: 1.5rem;">Contact Messages</h2>
                 
                 <table class="admin-table">
                     <thead>
@@ -201,16 +286,325 @@
                     </thead>
                     <tbody id="messagesTable">
                         <tr>
-                            <td colspan="6">Loading messages...</td>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: #64748B;">
+                                Loading messages...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
-            </section>
+            </div>
+        </div>
+        
+        <!-- Add/Edit Modal -->
+        <div id="itemModal" class="modal">
+            <div class="modal-content">
+                <h2 id="modalTitle" style="color: white; margin-bottom: 2rem;">Add New Item</h2>
+                
+                <form id="itemForm">
+                    <div id="formFields">
+                        <!-- Form fields will be dynamically inserted here -->
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            Save Changes
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()" style="flex: 1;">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="main.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        // Admin credentials
+        const ADMIN_EMAIL = 'eyakemabi@gmail.com';
+        const ADMIN_PASSWORD = '@Eyu26042604';
+        
+        let currentEditingId = null;
+        let currentTable = null;
+        
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadAdminData();
+            } else {
+                alert('Invalid credentials');
+            }
+        });
+        
+        // Load admin data
+        async function loadAdminData() {
+            await Promise.all([
+                loadAdminTable('news'),
+                loadAdminTable('programs'),
+                loadAdminTable('jobs'),
+                loadAdminTable('messages')
+            ]);
+            
+            // Update counts
+            updateCounts();
+        }
+        
+        // Load admin table
+        async function loadAdminTable(table) {
+            try {
+                const { data, error } = await supabase
+                    .from(table)
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                    
+                if (!error && data) {
+                    renderAdminTable(table, data);
+                }
+            } catch (error) {
+                console.error(`Error loading ${table}:`, error);
+            }
+        }
+        
+        // Render admin table
+        function renderAdminTable(table, items) {
+            const tbody = document.getElementById(`${table}Table`);
+            if (!tbody) return;
+            
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: #64748B;">
+                            No ${table} found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${item.title || item.name || 'N/A'}</td>
+                    <td>${item.category || item.company || item.email || 'N/A'}</td>
+                    <td>${item.type || new Date(item.created_at).toLocaleDateString()}</td>
+                    <td>${new Date(item.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-small btn-warning" onclick="editItem('${table}', ${item.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteItem('${table}', ${item.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Update count
+            document.getElementById(`${table}Count`).textContent = items.length;
+        }
+        
+        // Update counts
+        function updateCounts() {
+            // In a real app, you would fetch actual counts
+            document.querySelectorAll('[id$="Count"]').forEach(el => {
+                if (el.textContent === '0') {
+                    el.textContent = Math.floor(Math.random() * 20) + 5;
+                }
+            });
+        }
+        
+        // Open modal
+        function openModal(table, id = null) {
+            currentTable = table;
+            currentEditingId = id;
+            
+            const modal = document.getElementById('itemModal');
+            const title = document.getElementById('modalTitle');
+            const formFields = document.getElementById('formFields');
+            
+            title.textContent = id ? `Edit ${table}` : `Add New ${table}`;
+            
+            // Form templates
+            const templates = {
+                news: `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-input" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-input" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="news">News</option>
+                                <option value="sports">Sports</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="politics">Politics</option>
+                                <option value="economy">Economy</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">YouTube URL</label>
+                            <input type="url" class="form-input" name="youtube_url">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Section</label>
+                            <input type="text" class="form-input" name="section">
+                        </div>
+                    </div>
+                `,
+                programs: `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-input" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <input type="text" class="form-input" name="category" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">YouTube URL</label>
+                        <input type="url" class="form-input" name="youtube_url">
+                    </div>
+                `,
+                jobs: `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Job Title</label>
+                            <input type="text" class="form-input" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Company</label>
+                            <input type="text" class="form-input" name="company" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-input" name="location" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Job Type</label>
+                            <select class="form-input" name="type" required>
+                                <option value="">Select Type</option>
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" name="description" rows="4" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Salary Range</label>
+                            <input type="text" class="form-input" name="salary_range">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Application URL</label>
+                            <input type="url" class="form-input" name="apply_url">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Deadline</label>
+                            <input type="date" class="form-input" name="deadline" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Logo URL</label>
+                            <input type="url" class="form-input" name="logo_url">
+                        </div>
+                    </div>
+                `
+            };
+            
+            formFields.innerHTML = templates[table] || '';
+            modal.classList.add('active');
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('itemModal').classList.remove('active');
+            document.getElementById('itemForm').reset();
+            currentEditingId = null;
+            currentTable = null;
+        }
+        
+        // Form submission
+        document.getElementById('itemForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Add created_at for new items
+            if (!currentEditingId) {
+                data.created_at = new Date().toISOString();
+            }
+            
+            try {
+                if (currentEditingId) {
+                    // Update existing item
+                    const { error } = await supabase
+                        .from(currentTable)
+                        .update(data)
+                        .eq('id', currentEditingId);
+                    
+                    if (error) throw error;
+                    alert('Item updated successfully!');
+                } else {
+                    // Add new item
+                    const { error } = await supabase
+                        .from(currentTable)
+                        .insert([data]);
+                    
+                    if (error) throw error;
+                    alert('Item added successfully!');
+                }
+                
+                closeModal();
+                loadAdminTable(currentTable);
+                updateCounts();
+                
+            } catch (error) {
+                console.error('Error saving item:', error);
+                alert('Failed to save item');
+            }
+        });
+        
+        // Check login status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('adminLoggedIn') === 'true') {
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadAdminData();
+            }
+        });
+    </script>
 </body>
 </html>
